@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カメラ撮影＆フレーム合成</title>
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #000;
+    color: white;
+    font-family: sans-serif;
+  }
+  video, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+  #controls {
+    margin: 10px;
+  }
+  button {
+    font-size: 18px;
+    padding: 8px 16px;
+    margin: 5px;
+  }
+</style>
+</head>
+<body>
+  <h1>カメラ撮影＆フレーム合成</h1>
+  <video id="camera" autoplay playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <div id="controls">
+    <button onclick="switchFrame()">フレーム切り替え</button>
+    <button onclick="takePhoto()">撮影して保存</button>
+  </div>
+
+<script>
+let frameIndex = 0;
+const frames = ["frame1.png?v=2", "frame2.png?v=2"];
+const video = document.getElementById('camera');
+const canvas = document.getElementById('canvas');
+
+// カメラ起動
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => { video.srcObject = stream; })
+  .catch(err => { alert('カメラにアクセスできません: ' + err); });
+
+function switchFrame() {
+  frameIndex = (frameIndex + 1) % frames.length;
+  alert("フレームを切り替えました: " + frames[frameIndex]);
+}
+
+function takePhoto() {
+  const ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  // カメラ映像描画
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  // フレーム描画
+  const frameImg = new Image();
+  frameImg.src = frames[frameIndex];
+  frameImg.onload = () => {
+    ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+
+    // 自動保存リンク作成
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = 'photo_' + Date.now() + '.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+}
+</script>
+</body>
+</html>
